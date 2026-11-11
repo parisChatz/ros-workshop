@@ -1,0 +1,25 @@
+services:
+  ros:
+    # Students: `docker compose up -d`. The first run builds the image from ./Dockerfile
+    # (10-20 min, several GB of downloads); later runs reuse it.
+    image: ros2-lecture:jazzy
+    build: .
+    container_name: ros2-lecture
+    hostname: ros2-lecture
+    ports:
+      - "127.0.0.1:6080:6080"   # desktop (noVNC)  -> http://localhost:6080
+      - "127.0.0.1:8080:8080"   # VS Code          -> http://localhost:8080
+    volumes:
+      - ./workspace:/home/ros/workspace
+    shm_size: "2gb"
+    environment:
+      - TURTLEBOT3_MODEL=${TURTLEBOT3_MODEL:-waffle}
+      - ROS_DOMAIN_ID=${ROS_DOMAIN_ID:-30}
+      - VNC_GEOMETRY=${VNC_GEOMETRY:-1600x900}
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fs http://localhost:6080/vnc.html >/dev/null && curl -fs http://localhost:8080/healthz >/dev/null"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
