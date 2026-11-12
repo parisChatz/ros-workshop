@@ -15,6 +15,8 @@ setup(
         ('share/' + package_name, ['package.xml']),
         # Installs every launch file, so `ros2 launch lecture_demo <file>` can find it.
         ('share/' + package_name + '/launch', glob('launch/*.launch.py')),
+        # Gazebo worlds, used by the launch files.
+        ('share/' + package_name + '/worlds', glob('worlds/*.sdf')),
     ],
     install_requires=['setuptools'],
     zip_safe=True,
@@ -37,6 +39,7 @@ setup(
             'scan_listener = lecture_demo.scan_listener:main',
             'square_driver = lecture_demo.square_driver:main',
             'edge_detector = lecture_demo.edge_detector:main',
+            'yolo_detector = lecture_demo.yolo_detector:main',
             # Exercises (code with TODOs for the students)
             'exercise_scan_listener = lecture_demo.exercise_scan_listener:main',
             'exercise_square_driver = lecture_demo.exercise_square_driver:main',

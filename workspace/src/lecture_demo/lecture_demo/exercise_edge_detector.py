@@ -39,38 +39,38 @@ class ExerciseEdgeDetector(Node):
     """Detect edges in the camera image and publish them as a new image (exercise version)."""
 
     def __init__(self):
-        super().__init__('exercise_edge_detector')
+        super().__init__("exercise_edge_detector")
 
         # Canny edge detector settings: strong brightness changes (> high) are edges,
         # weak ones (< low) are dropped.
-        self.declare_parameter('low_threshold', 50)
-        self.declare_parameter('high_threshold', 150)
+        self.declare_parameter("low_threshold", 50)
+        self.declare_parameter("high_threshold", 150)
 
         # Converts between ROS image messages and OpenCV images.
         self.bridge = CvBridge()
 
         # Publisher for the result image (already written for you).
-        self.pub = self.create_publisher(Image, 'camera/edges', 10)
+        self.pub = self.create_publisher(Image, "camera/edges", 10)
 
         # TODO 1: Subscribe to the camera.
         #   Use:  self.create_subscription(message_type, topic_name, callback, qos_profile)
-        #     * message_type : Image                    (already imported above)
-        #     * topic_name   : 'camera/image_raw'
+        #     * message_type already imported above)
+        #     * topic_name
         #     * callback     : self.on_image            (the function defined below)
         #     * qos_profile  : qos_profile_sensor_data  (cameras need this "best effort" QoS)
         #   Write your line here:
 
     def on_image(self, msg: Image):
         """Run for every camera image: find the edges and publish them."""
-        low = self.get_parameter('low_threshold').value
-        high = self.get_parameter('high_threshold').value
+        low = self.get_parameter("low_threshold").value
+        high = self.get_parameter("high_threshold").value
 
         # ROS image message -> OpenCV image ('bgr8' = 3 colour channels). Already written.
-        frame = self.bridge.imgmsg_to_cv2(msg, desired_encoding='bgr8')
+        frame = self.bridge.imgmsg_to_cv2(msg, desired_encoding="bgr8")
 
         # TODO 2: Convert the colour image to grayscale (edges only need brightness).
         #   Use:  gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
-        #   Replace the None below with your call (the image to convert is `frame`):
+        #   Replace the None below with your call:
         gray = None
 
         # TODO 3: Blur the grayscale image a little, then find the edges.
@@ -81,7 +81,9 @@ class ExerciseEdgeDetector(Node):
 
         if edges is None:
             self.get_logger().warn(
-                'Exercise not finished yet: complete TODO 2 and TODO 3', throttle_duration_sec=5.0)
+                "Exercise not finished yet: complete TODO 2 and TODO 3",
+                throttle_duration_sec=5.0,
+            )
             return
 
         # TODO 4: Publish the edge image.
@@ -89,8 +91,7 @@ class ExerciseEdgeDetector(Node):
         #         out = self.bridge.cv2_to_imgmsg(edges, encoding='mono8')
         #   * Copy the header of the camera image so the timestamp stays correct:
         #         out.header = msg.header
-        #   * Publish it with the publisher created above:
-        #         self.pub.publish(out)
+        #   * Publish it with the publisher created above
         #   Write your lines here:
 
 
@@ -108,5 +109,5 @@ def main(args=None):
         rclpy.try_shutdown()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

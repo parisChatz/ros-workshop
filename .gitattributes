@@ -1,0 +1,6 @@
+# Everything here runs inside a Linux container: keep LF line endings even when a
+# Windows machine clones with core.autocrlf=true (CRLF breaks shell scripts and configs).
+* text=auto eol=lf
+*.sh text eol=lf
+docker/** text eol=lf
+Dockerfile text eol=lf

@@ -39,23 +39,23 @@ class ExerciseSquareDriver(Node):
     """Publish velocity commands that make the robot drive in a square (exercise version)."""
 
     def __init__(self):
-        super().__init__('exercise_square_driver')
+        super().__init__("exercise_square_driver")
 
         # Parameters (settings you can change when starting the node).
-        self.declare_parameter('side_length', 1.0)    # metres
-        self.declare_parameter('linear_speed', 0.2)   # metres per second
-        self.declare_parameter('angular_speed', 0.5)  # radians per second
+        self.declare_parameter("side_length", 1.0)  # metres
+        self.declare_parameter("linear_speed", 0.2)  # metres per second
+        self.declare_parameter("angular_speed", 0.5)  # radians per second
 
         # TODO 1: Create the publisher that sends velocity commands to the robot.
         #   Use:  self.create_publisher(message_type, topic_name, queue_size)
-        #     * message_type : TwistStamped   (already imported above)
-        #     * topic_name   : 'cmd_vel'
+        #     * message_type (already imported above)
+        #     * topic_name
         #     * queue_size   : 10
         #   Replace the None below with your call:
         self.pub = None
 
         # State machine: what are we doing right now, and since when?
-        self.state = 'forward'
+        self.state = "forward"
         self.state_start = self.get_clock().now()
 
         # Call self.tick 20 times per second.
@@ -63,9 +63,9 @@ class ExerciseSquareDriver(Node):
 
     def tick(self):
         """Run 20 times per second: publish a command and switch state when it is time."""
-        side = self.get_parameter('side_length').value
-        v = self.get_parameter('linear_speed').value
-        w = self.get_parameter('angular_speed').value
+        side = self.get_parameter("side_length").value
+        v = self.get_parameter("linear_speed").value
+        w = self.get_parameter("angular_speed").value
 
         # TODO 2: How long (in seconds) should the current state last?
         #   * Going forward:  time = distance / speed          ->  side / v
@@ -82,13 +82,13 @@ class ExerciseSquareDriver(Node):
 
         # Time is up: switch between 'forward' and 'turn' and restart the stopwatch.
         if elapsed >= duration:
-            self.state = 'turn' if self.state == 'forward' else 'forward'
+            self.state = "turn" if self.state == "forward" else "forward"
             self.state_start = self.get_clock().now()
 
         # Build the velocity command (the header with the timestamp is already filled in).
         msg = TwistStamped()
         msg.header.stamp = self.get_clock().now().to_msg()
-        msg.header.frame_id = 'base_link'
+        msg.header.frame_id = "base_link"
 
         # TODO 3: Fill in the velocity.
         #   * 'forward' state: drive forward -> msg.twist.linear.x = v
@@ -113,5 +113,5 @@ def main(args=None):
         rclpy.try_shutdown()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

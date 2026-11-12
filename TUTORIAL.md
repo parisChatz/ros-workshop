@@ -15,6 +15,8 @@ You only need **Docker** and a **web browser**. It works the same on Windows, ma
 | **macOS** (Intel or Apple Silicon) | [Docker Desktop](https://www.docker.com/products/docker-desktop/) |
 | **Linux** | [Docker Engine](https://docs.docker.com/engine/install/) + the Compose plugin. Then run `sudo usermod -aG docker $USER` and log out/in. |
 
+**Windows:** follow the extra setup in [Windows setup](#windows-setup-wsl-2) below *before* section 2.
+
 Check that it works:
 
 ```bash
@@ -24,13 +26,61 @@ docker compose version
 
 **Give Docker enough resources** (Docker Desktop → Settings → Resources): at least
 **4 CPUs and 8 GB RAM**. The simulation is rendered in software, so more CPU = smoother.
+(On Windows the memory limit is set in `.wslconfig`, see the Windows setup below.)
 
 > The first start builds the image (10-20 minutes, several GB of downloads). Do this **before** the lecture, on a good connection.
 
+## Windows setup (WSL 2)
+
+On Windows, keep the project **inside WSL (Linux)**, not under `C:\...`. It is much faster, and
+file permissions and symlinks (needed by `colcon build`) work properly.
+
+1. **Install WSL + Ubuntu.** Open PowerShell **as Administrator** and run:
+
+   ```powershell
+   wsl --install
+   ```
+
+   Reboot when asked, then open **Ubuntu** from the Start menu and create a username and password.
+   (Needs virtualization enabled in the BIOS/UEFI. It normally is. If WSL or Docker says
+   "virtualization is disabled", enable it there.)
+2. **Install [Docker Desktop](https://www.docker.com/products/docker-desktop/)** with the WSL 2
+   backend (the default). Then in Docker Desktop → Settings → Resources → **WSL integration**, switch
+   on **Ubuntu**.
+3. **Give WSL enough memory.** By default WSL gets half of your RAM, and Docker Desktop's resource
+   sliders do not apply to it. In PowerShell:
+
+   ```powershell
+   notepad $env:USERPROFILE\.wslconfig
+   ```
+
+   Paste this and save (use less than your total RAM; 8 GB needs a laptop with 16 GB):
+
+   ```ini
+   [wsl2]
+   memory=8GB
+   ```
+
+   Then run `wsl --shutdown` and start Docker Desktop again.
+4. From now on, run **all commands in the Ubuntu terminal** (not PowerShell). In section 2, clone
+   into your Linux home:
+
+   ```bash
+   cd ~
+   git clone <repo-url> ros-workshop
+   cd ros-workshop
+   ```
+
+   Do not use the ZIP download on Windows. Open the browser links with `127.0.0.1` instead of
+   `localhost` if `localhost` does not load.
+5. Your files are at `\\wsl$\Ubuntu\home\<you>\ros-workshop\workspace` in Windows Explorer. VS Code in the
+   browser (port 8080) is the easiest way to edit them.
+
 ## 2. Get the lecture files and start the environment
 
-1. Download the lecture folder (zip or `git clone`) and open a terminal in it. It contains
-   `docker-compose.yml` and an (almost empty) `workspace/` folder.
+1. Get the lecture folder with `git clone <repo-url>` and open a
+   terminal in it. **Windows: use the Ubuntu terminal from the Windows setup above.** The folder contains
+   `docker-compose.yml` and a `workspace/` folder with the example package `lecture_demo`.
 2. Start everything:
 
    ```bash
@@ -127,8 +177,15 @@ Stop things with **Ctrl+C**. Simulation too slow? See [Troubleshooting](#8-troub
 An example package, `lecture_demo`, is already in `workspace/src/`. Open it in VS Code
 (port 8080) and read it first:
 
-* `lecture_demo/scan_listener.py` – a **subscriber** (lidar → closest obstacle).
-* `lecture_demo/square_driver.py` – a **publisher** (drives the robot in a square).
+* `lecture_demo/lecture_demo/scan_listener.py` – a **subscriber** (lidar → closest obstacle).
+* `lecture_demo/lecture_demo/square_driver.py` – a **publisher** (drives the robot in a square).
+* `lecture_demo/lecture_demo/edge_detector.py` – **both**: camera image in, edge image out.
+* `lecture_demo/lecture_demo/yolo_detector.py` – a neural network that finds objects in the camera image
+  (see "Object detection with YOLO" below).
+
+Every file starts with a comment block explaining what it does, and the code is commented line
+by line. The package follows the standard ROS 2 Python layout (the same one
+`ros2 pkg create` generates); `workspace/src/lecture_demo/README.md` explains each file and folder.
 
 Build and run it (terminal in `~/workspace`):
 
@@ -204,7 +261,76 @@ Drive the robot towards the walls or the coloured pillars to see more edges; an 
 (sky and floor only) just shows the horizon line. Lower thresholds give more edges.
 The camera is 1920x1080, which is heavy in software rendering: expect a few frames per second.
 
-**Exercises**
+### Object detection with YOLO
+
+Edge detection is a hand-written recipe. **YOLO** is a neural network that has *learned* what
+objects look like: it tells you **what** is in the image (person, chair, bus... 80 everyday
+classes), **where** (a box) and **how sure** it is (a score from 0 to 1).
+`lecture_demo/yolo_detector.py` runs it on `/camera/image_raw` and publishes:
+
+* `/yolo/image` – the camera image with boxes and labels drawn on it
+* `/yolo/detections` – the same results as data (`vision_msgs/Detection2DArray`), which other
+  nodes could use, e.g. to follow a person
+
+```bash
+# with the simulation running
+ros2 run lecture_demo yolo_detector --ros-args -p use_sim_time:=true
+ros2 run rqt_image_view rqt_image_view     # pick /yolo/image in the drop-down
+ros2 topic echo /yolo/detections
+```
+
+The default Gazebo world has no real everyday objects, so YOLO may report nothing, or low-score
+guesses such as "refrigerator 0.45" for a pillar. Keep only confident detections with
+`-p conf:=0.6`. If your computer is slow, make it faster with `-p imgsz:=320`.
+
+Three neural networks are included in `/opt/models/`. The default, `yolo26s`, is the most
+accurate. If your computer is slow, `yolo26n` needs about half the computation (`yolo11n` is a
+similar, older small one):
+
+```bash
+ros2 run lecture_demo yolo_detector --ros-args -p model:=yolo26n.pt
+```
+
+**To see YOLO working on real objects**, publish a photo as if it were the robot's camera.
+Put a `.jpg` with people, cars, chairs... into your `workspace/` folder, **stop the simulation**
+(it also publishes on `/camera/image_raw`) and run:
+
+```bash
+ros2 run image_publisher image_publisher_node ~/workspace/my_photo.jpg --ros-args -r image_raw:=/camera/image_raw
+ros2 run lecture_demo yolo_detector       # in a second terminal
+ros2 run rqt_image_view rqt_image_view    # in a third: pick /yolo/image
+```
+
+The `rqt_image_view` window opens small and shows the picture as a thumbnail: **maximise or
+resize the window** (title bar buttons, or drag its corner) to see the boxes.
+
+The first run of the node takes a second or two to load the network. It runs on the CPU (no
+graphics card needed), so expect a few frames per second next to the simulator.
+
+### Guided exercises: complete the code
+
+For each demo there is an exercise version with a few **TODO**s for you to fill in. Everything
+else is already written, and every TODO has hints.
+
+| Exercise file (in `lecture_demo/lecture_demo/`) | You write | Run it with |
+|---|---|---|
+| `exercise_scan_listener.py` | subscription, filtering the lidar readings, printing the closest one (3 TODOs) | `ros2 run lecture_demo exercise_scan_listener` |
+| `exercise_square_driver.py` | publisher, state durations, velocity, publishing (4 TODOs) | `ros2 run lecture_demo exercise_square_driver` |
+| `exercise_edge_detector.py` | subscription, grayscale, blur + Canny, publishing the result (4 TODOs) | `ros2 run lecture_demo exercise_edge_detector` |
+
+Workflow:
+
+1. Start the simulation in one terminal: `tb3world`.
+2. Open the exercise file in VS Code, read the comment block at the top, and complete the TODOs.
+3. In a second terminal run `cb` once (it registers the new `exercise_*` commands), then run your node.
+   After that, just save the file and restart the node (Ctrl+C, run again).
+4. Stuck? The finished version is the same file without the `exercise_` prefix.
+
+An unfinished exercise runs without errors; it just does not do anything yet. Look for the
+`# flake8: noqa` line near the top: it only keeps the code-style checker quiet while you work
+and you can delete it when you are done.
+
+### Extra challenges
 
 1. Make `scan_listener` publish `std_msgs/Float32` on `/closest_obstacle`; view it in `rqt_plot`.
 2. Make the robot **stop** when something is closer than 0.4 m (subscribe to `/scan`, publish

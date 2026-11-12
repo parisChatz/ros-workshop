@@ -3,3 +3,4 @@ workspace/install/
 workspace/log/
 __pycache__/
 .vscode/
+.pytest_cache/

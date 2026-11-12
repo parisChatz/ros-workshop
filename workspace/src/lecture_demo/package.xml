@@ -12,14 +12,31 @@
   <depend>geometry_msgs</depend>
   <depend>sensor_msgs</depend>
   <depend>cv_bridge</depend>
+  <depend>vision_msgs</depend>
   <exec_depend>python3-opencv</exec_depend>
+  <!-- yolo_detector also needs the `ultralytics` and `torch` Python packages. rosdep cannot
+       install them (torch has no apt package on Ubuntu 24.04, and a plain `pip install` would
+       pull a huge CUDA build and break cv_bridge), so outside Docker they are installed into
+       a uv environment: see README.md. The Docker image already has them. -->
 
   <!-- Packages our launch files use -->
   <exec_depend>ament_index_python</exec_depend>
   <exec_depend>launch</exec_depend>
   <exec_depend>launch_ros</exec_depend>
-  <exec_depend>turtlebot3_gazebo</exec_depend>
   <exec_depend>rqt_image_view</exec_depend>
+
+  <!-- The simulation: Gazebo + TurtleBot3 (robot model, worlds, teleop, SLAM, navigation).
+       `turtlebot3_simulations` provides turtlebot3_gazebo (our launch files include it). -->
+  <exec_depend>ros_gz</exec_depend>
+  <exec_depend>turtlebot3</exec_depend>
+  <exec_depend>turtlebot3_simulations</exec_depend>
+  <exec_depend>turtlebot3_gazebo</exec_depend>
+  <exec_depend>nav2_bringup</exec_depend>
+
+  <!-- Tools used in the tutorial -->
+  <exec_depend>rviz2</exec_depend>
+  <exec_depend>teleop_twist_keyboard</exec_depend>
+  <exec_depend>image_publisher</exec_depend>
 
   <test_depend>ament_copyright</test_depend>
   <test_depend>ament_flake8</test_depend>

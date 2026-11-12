@@ -37,12 +37,12 @@ class ExerciseScanListener(Node):
     """Print the distance to the closest obstacle (exercise version)."""
 
     def __init__(self):
-        super().__init__('exercise_scan_listener')
+        super().__init__("exercise_scan_listener")
 
         # TODO 1: Subscribe to the lidar topic.
         #   Use:  self.create_subscription(message_type, topic_name, callback, qos_profile)
-        #     * message_type : LaserScan                (already imported above)
-        #     * topic_name   : 'scan'
+        #     * message_type (already imported above)
+        #     * topic_name
         #     * callback     : self.on_scan             (the function defined below)
         #     * qos_profile  : qos_profile_sensor_data  (sensors need this "best effort" QoS)
         #   Write your line here:
@@ -64,9 +64,10 @@ class ExerciseScanListener(Node):
             return  # nothing usable (this is what happens until you finish TODO 2)
 
         # TODO 3: Find the smallest usable distance and print it.
-        #   * The closest obstacle is the smallest distance:  closest = min(valid)
+        #   * The closest obstacle is the smallest distance
         #   * Print it with:  self.get_logger().info(f'closest obstacle: {closest:.2f} m')
         #   * Optional: add  throttle_duration_sec=1.0  inside info(...) to print once per second.
+        #   * Can do also with simple Python print
         #   Write your lines here:
 
 
@@ -84,5 +85,5 @@ def main(args=None):
         rclpy.try_shutdown()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

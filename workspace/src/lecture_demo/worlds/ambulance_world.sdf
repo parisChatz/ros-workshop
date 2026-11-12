@@ -1,0 +1,52 @@
+<?xml version="1.0"?>
+<!--
+  Empty world + two models from Gazebo Fuel (downloaded on first run, then cached in ~/.gz/fuel):
+    * Ambulance      https://app.gazebosim.org/yoz/fuel/models/Ambulance
+    * Walking person https://app.gazebosim.org/Abdurrahman/fuel/models/Walking%20person
+  The TurtleBot3 is NOT in this file: the launch file spawns it at (0, 0).
+  Same plugins/physics as turtlebot3_gazebo's empty_world.world.
+-->
+<sdf version="1.6">
+  <world name="default">
+    <plugin filename="gz-sim-physics-system" name="gz::sim::systems::Physics"/>
+    <plugin filename="gz-sim-user-commands-system" name="gz::sim::systems::UserCommands"/>
+    <plugin filename="gz-sim-scene-broadcaster-system" name="gz::sim::systems::SceneBroadcaster"/>
+    <plugin filename="gz-sim-sensors-system" name="gz::sim::systems::Sensors">
+      <render_engine>ogre2</render_engine>
+    </plugin>
+    <plugin filename="gz-sim-imu-system" name="gz::sim::systems::Imu"/>
+
+    <include>
+      <uri>https://fuel.gazebosim.org/1.0/OpenRobotics/models/Ground Plane</uri>
+    </include>
+    <include>
+      <uri>https://fuel.gazebosim.org/1.0/OpenRobotics/models/Sun</uri>
+    </include>
+
+    <!-- The ambulance mesh is ~3 m wide, 7.5 m long and centred on its origin.
+         Parked to the side, rotated 90 degrees so its length runs along the world X axis. -->
+    <include>
+      <name>ambulance</name>
+      <uri>https://fuel.gazebosim.org/1.0/yoz/models/Ambulance</uri>
+      <pose>3.5 -3 0 0 0 1.5708</pose>
+    </include>
+
+    <!-- Static so it does not get knocked over; yaw pi so it faces the robot's start point. -->
+    <include>
+      <name>walking_person</name>
+      <uri>https://fuel.gazebosim.org/1.0/Abdurrahman/models/Walking person</uri>
+      <static>true</static>
+      <pose>2 1.5 0 0 0 3.14159</pose>
+    </include>
+
+    <scene>
+      <shadows>false</shadows>
+    </scene>
+
+    <physics type="ode">
+      <real_time_update_rate>1000.0</real_time_update_rate>
+      <max_step_size>0.001</max_step_size>
+      <real_time_factor>1</real_time_factor>
+    </physics>
+  </world>
+</sdf>
